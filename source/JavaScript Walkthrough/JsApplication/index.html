@@ -1,66 +1,64 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <title>JS Application</title>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css" />
-    <style>
-        .main-container {
-            padding-top: 70px;
-        }
+  <title>JS Application</title>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.css" />
+  <style>
+    .main-container {
+      padding-top: 70px;
+    }
 
-        pre:empty {
-            display: none;
-        }
-    </style>
+    pre:empty {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-    <nav class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container">
-            <div class="navbar-header">
-                <a class="navbar-brand" href="#">JS Application</a>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container main-container">
-        <div class="row">
-            <div class="col-xs-12">
-                <ul class="list-inline list-unstyled requests">
-                    <li><a href="index.html" class="btn btn-primary">Home</a></li>
-                    <li><button type="button" class="btn btn-default js-login">Login</button></li>
-                    <li><button type="button" class="btn btn-default js-call-api">Call API</button></li>
-                    <li><button type="button" class="btn btn-danger js-logout">Logout</button></li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-xs-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">User data</div>
-                    <div class="panel-body">
-                        <pre class="js-user"></pre>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xs-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">API call result</div>
-                    <div class="panel-body">
-                        <pre class="js-api-result"></pre>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">JS Application</a>
+      </div>
     </div>
-
-    <script src="node_modules/jquery/dist/jquery.js"></script>
-    <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
-    <script src="node_modules/oidc-client/dist/oidc-client.js"></script>
-
-    <script>
+  </nav>
+  <div class="container main-container">
+    <div class="row">
+      <div class="col-xs-12">
+        <ul class="list-inline list-unstyled requests">
+          <li><a href="index.html" class="btn btn-primary">Home</a></li>
+          <li><button type="button" class="btn btn-default js-login">Login</button></li>
+          <li><button type="button" class="btn btn-default js-call-api">Call API</button></li>
+          <li><button type="button" class="btn btn-default js-call-reg">Register Session</button></li>
+          <li><button type="button" class="btn btn-default js-call-rev-active">Revoke Active Token</button></li>
+          <li><button type="button" class="btn btn-default js-call-rev-current">Revoke Current Token</button></li>
+          <li><button type="button" class="btn btn-danger js-logout">Logout</button></li>
+        </ul>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-6">
+        <div class="panel panel-default">
+          <div class="panel-heading">User data</div>
+          <div class="panel-body">
+            <pre class="js-user"></pre>
+          </div>
+        </div>
+      </div>
+      <div class="col-xs-6">
+        <div class="panel panel-default">
+          <div class="panel-heading">API call result</div>
+          <div class="panel-body">
+            <pre class="js-api-result"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="node_modules/jquery/dist/jquery.js"></script>
+  <script src="node_modules/bootstrap/dist/js/bootstrap.js"></script>
+  <script src="node_modules/oidc-client/dist/oidc-client.js"></script>
+  <script>
         // helper function to show data to the user
         function display(selector, data) {
             if (data && typeof data === 'string') {
@@ -74,14 +72,14 @@
         }
 
         var settings = {
-            authority: 'https://localhost:44300',
-            client_id: 'js',
-            popup_redirect_uri: 'http://localhost:56668/popup.html',
-            silent_redirect_uri: 'http://localhost:56668/silent-renew.html',
-            post_logout_redirect_uri: 'http://localhost:56668/index.html',
+            authority: 'https://localhost:44301',
+            client_id: 'ff-webapp',
+            popup_redirect_uri: 'http://localhost:8888/popup.html',
+            silent_redirect_uri: 'http://localhost:8888/silent-renew.html',
+            post_logout_redirect_uri: 'http://localhost:8888',
 
             response_type: 'id_token token',
-            scope: 'openid profile email api',
+            scope: 'ffapi openid',
 
             accessTokenExpiringNotificationTime: 4,
             automaticSilentRenew: true,
@@ -116,13 +114,37 @@
         });
 
         $('.js-call-api').on('click', function () {
+            get('http://localhost:57079/api/auth/ping');
+        });
+
+        $('.js-call-reg').on('click', function () {
+            get('http://localhost:57079/api/sessions/register');
+        });
+
+        $('.js-call-rev-active').on('click', function () {
+            get('http://localhost:57079/api/sessions/RevokeActiveSession');
+        });
+
+        $('.js-call-rev-current').on('click', function () {
+            get('http://localhost:57079/api/sessions/RevokeCurrentSession');
+        });
+
+        $('.js-logout').on('click', function () {
+            manager
+                .signoutRedirect()
+                .catch(function (error) {
+                    console.error('error while signing out user', error);
+                });
+        });
+
+        function get(url) {
             var headers = {};
             if (user && user.access_token) {
                 headers['Authorization'] = 'Bearer ' + user.access_token;
             }
 
-            $.ajax({
-                url: 'http://localhost:60136/values',
+            return $.ajax({
+                url: url,
                 method: 'GET',
                 dataType: 'json',
                 headers: headers
@@ -135,15 +157,7 @@
                     response: error.responseJSON
                 });
             });
-        });
-
-        $('.js-logout').on('click', function () {
-            manager
-                .signoutRedirect()
-                .catch(function (error) {
-                    console.error('error while signing out user', error);
-                });
-        });
-    </script>
+        }
+  </script>
 </body>
 </html>
